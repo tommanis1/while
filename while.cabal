@@ -1,0 +1,31 @@
+cabal-version:      3.0
+name:               while
+version:            0.1.0.0
+
+license:            MIT
+license-file:       LICENSE
+author:             Tommaso Pacciani
+build-type:         Simple
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+    exposed-modules:  Examples
+    other-modules:
+        While
+        , DebugWhile
+        , Programs.IncorrectMutex1
+        , Programs.IncorrectMutex2
+        , Programs.IncorrectMutex3
+        , Programs.IncorrectMutex4
+        , Programs.IncorrectMutex4
+        , MultiverseDebug
+    build-depends:
+        base ^>=4.17.2.1
+        , containers >=0.5 && <0.7
+        , transformers >= 0.5.2 && < 0.6
+        , mtl          >= 2.2.1 && < 2.3,
+    hs-source-dirs:   src, debug
+    default-language: Haskell2010
