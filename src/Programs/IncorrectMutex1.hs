@@ -1,5 +1,7 @@
 module Programs.IncorrectMutex1 where
 import While
+
+import SmartConstructorsWhile
 {- 
 loop
     noncritical code for process self;
@@ -34,7 +36,19 @@ p = Seq (Assign "turn" (LitExpr $ LitInt 0))
         (Seq (Print . LitExpr . LitString $ "End critical section 1 ")
         (Assign "turn" (LitExpr $ LitInt 0))))    
         ))
-    
+
+-- ps = 
+--     (Assign "turn" (i 0)) ⍮
+--     (Thread $
+--         (while (Eq (Id "turn") (i 1)) Done) ⍮
+--         (Print $ s "Begin critical section 0 ") ⍮
+--         (Print $ s "End critical section 0 ") ⍮
+--         (Assign "turn" (i 1)))
+--     (Thread $
+--         (while(Eq (Id "turn") (LitExpr $ LitInt 0)) Done) ⍮
+--          (Print . LitExpr . LitString $ "Begin  critical section 1 ") ⍮
+--         (Print . LitExpr . LitString $ "End critical section 1 ") ⍮
+--         (Assign "turn" (i 0)))
 
 -- possible syntax 
 
