@@ -3,12 +3,20 @@ module While where
 import qualified Data.Map as Map
 import Data.List
 import Data.Maybe
+-- import Data.Graph.Inductive (emap)
 import Control.Monad.Trans.Writer.Lazy
 import Control.Monad.Trans.State.Lazy
 import Control.Monad.Trans.Class
 import Control.Monad.Identity
-
+-- import qualified Language.Explorer.Basic as E
+-- import qualified Language.Explorer.Pure as EP
+-- import qualified Language.Explorer.Monadic as EM
+-- import qualified Language.Explorer.Tools.REPL as R
+-- import Language.Explorer.Basic (mkExplorerNoSharing)
 import Control.Monad.Reader
+
+import Debug.Trace
+
 
 data Literal = LitBool Bool 
               | LitInt Integer
