@@ -1,0 +1,55 @@
+data Config = Config { 
+    cfgStore :: Map.Map String Literal
+  , cfgThreads :: [Command]
+  , cfgOutput :: Output 
+  } deriving (Show, Eq)
+
+
+data Literal = LitBool Bool 
+              | LitInt Integer
+              | LitString String
+  deriving (Eq, Read)
+
+instance Show Literal where
+    show (LitBool b) = show b
+    show (LitInt i) = show i
+    show (LitString s) = s
+
+
+data Expr = Eq Expr Expr
+          | Leq Expr Expr
+          | Plus Expr Expr
+          | LitExpr Literal
+          | And Expr Expr
+          | Id String deriving (Eq, Read)
+
+instance Show Expr where
+    show (Eq e1 e2) = show e1 ++ "==" ++ show e2
+
+    show (Leq e1 e2) = show e1 ++ "<=" ++ show e2
+    show (Plus e1 e2) = show e1 ++ "+" ++ show e2
+    show (LitExpr lit) = show lit
+    show (And e1 e2) = show e1 ++ "&&" ++ show e2
+    show (Id s) = s
+
+data Command = Seq Command Command 
+    | Assign String Expr 
+    | Print Expr
+    | While Expr Expr Command
+    | Done
+    | Thread Command
+    deriving (Eq, Read)
+
+instance Show Command where
+    show (Print e1) = "print(" ++ show e1 ++ ")"
+    show Done = "Done"
+    show (Assign s e) = s ++ " = " ++ show e
+    show (Seq c1 c2) = "Seq( " ++ show c1 ++ "\n" ++ show c2 ++ ")"
+    show (While e1 e2 c) = "while(" ++ show e2 ++ ") do\n" ++ show c ++ "\nod"
+    show (Thread c) = "new thread " ++ show c ++ " \n"
+
+emptyConfig :: Config
+emptyConfig = Config {cfgStore = Map.empty, cfgThreads = [], cfgOutput = [] }
+
+instance Show Config where
+    show (Config st th out) = "{ store = " ++ show st ++ ", threads = " ++ show th ++ ", out = " ++ show out" }"
