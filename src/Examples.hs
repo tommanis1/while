@@ -5,8 +5,9 @@ import qualified Programs.IncorrectMutex1 as P1
 import qualified Programs.IncorrectMutex2 as P2
 import qualified Programs.IncorrectMutex3 as P3
 import qualified Programs.IncorrectMutex4 as P4
-
+import qualified Programs.VariableChanges
 import qualified Programs.DiningPhilosophers as DiningPhilosophers
+
 
 import DebugWhile
 import MVD.Debugger
@@ -15,6 +16,9 @@ import MVD.Interface
 
 import SmartConstructorsWhile
 import While
+
+import qualified Data.Map as Map
+ 
 {- example_trivial0 = debuggerWithShow (whileStr (Just $ Seq (Print . LitExpr . LitString $ "t0 0") (Print . LitExpr . LitString $ "t0 1"))) equalityFinder (OutputCoutingFromLatest 0 "t0 1") ()
  -}
 
@@ -119,3 +123,23 @@ deadlock =  TreeNode two_threads_checking$ [
     --     two_threads_waiting = \((Config c _ _ t), _) -> 2 == (length [ 1 | (_, Seq Done (While _ _ Done)) <- c:t])
         two_threads_checking =  \((Config c _ _ t), _)-> (length $ [ 1 | (_, Seq (Seq(While _ _ Done ) _) _) <- c:t]) >= 2 --(While _ _ Done)
 
+-- Step breakpoints 
+val_changes id =  \((Config _ store _ _), _)->
+    let 
+        v1 = id `lookup_val_in` store
+        right v1= \((Config _ store _ _), _)-> 
+            let v2 = id `lookup_val_in` store in 
+                case v2 of 
+                    Nothing -> False
+                    (Just v2) -> v2 /= v1
+    in case v1 of 
+        Nothing -> \_-> False
+        (Just v1) -> right v1
+
+
+    where 
+        lookup_val_in :: String-> Store -> Maybe Literal
+        lookup_val_in var store = Map.lookup var store
+
+
+value_changes = debuggerWithShow (whileStr Programs.VariableChanges.p) (finder bfsStepper emptyPruner (stepBreakpointBreaker (val_changes "x"))) mutex_violation ""

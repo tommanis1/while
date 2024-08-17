@@ -13,4 +13,4 @@ i = LitExpr . LitInt
 b = LitExpr . LitBool
 
 while :: Expr -> Command -> Command
-while e c = While (LitExpr $ LitBool True) e c
+while e c = While e e c

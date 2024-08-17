@@ -41,6 +41,7 @@ data Command = Seq Command Command
     | Assign String Expr 
     | Print Expr
     | While Expr Expr Command
+    | IfElse Expr Command Command
     | Done
     | Thread Command
     deriving (Eq, Read)
@@ -53,6 +54,11 @@ instance Show Command where
     show (Seq c1 c2) = "Seq( " ++ show c1 ++ "\n" ++ show c2 ++ ")"
     show (While e1 e2 c) = "while(" ++ show e2 ++ ") do\n" ++ show c ++ "\nod"
     show (Thread c) = "new thread " ++ show c ++ " \n"
+    show (IfElse e c1 c2) =
+        "if (" ++ show e ++ ") then\n" ++
+        "\t" ++ (show c1) ++ "\n" ++
+        "else\n" ++
+        "\t" ++ (show c2) ++ "\nfi"
 
 -- emptyConfig :: Config
 -- emptyConfig = Config {current cfgStore = Map.empty, cfgOutput = [], cfgThreads = [] }
@@ -130,11 +136,9 @@ evalExpr' e = do
 evalThread :: Command -> WriterT Output (State (Store, Threads)) Command
 evalThread c = do
     (store, threads) <- lift get
-    lift $ put (store, ( 1 +(max_id threads), c) : threads)
+    lift $ put (store, ( 1 +(fromIntegral.length $ threads), c) : threads)
     return Done 
-    where 
-        max_id [] = 0
-        max_id threads = maximum $ map fst threads
+
 evalCommand :: Command -> WriterT Output (State (Store, Threads)) Command
 evalCommand (Print e) = do
     store <- lift $ state $ \(s, t) -> (s, (s, t))
@@ -169,6 +173,15 @@ evalCommand (While e1 e2 c) = do
 evalCommand (Thread c) = evalThread c 
 
 
+evalCommand (IfElse (LitExpr (LitBool True )) c1 c2 ) = return c1 
+evalCommand (IfElse (LitExpr (LitBool False )) c1 c2 ) = return c2
+evalCommand (IfElse e c1 c2 ) = do
+    store <- lift $ state $ \(s, t) -> (s, (s, t))
+    e' <- lift $ lift $ runReaderT (evalExpr' e) store
+    return $ IfElse e' c1 c2
+
+
+
 evalCommand' :: Command -> WriterT Output (State (Store, Threads)) Command
 evalCommand' Done = return Done
 evalCommand' c = do
@@ -176,8 +189,7 @@ evalCommand' c = do
     evalCommand' c'
 
 step :: Config -> [Config]
-
-step (Config (t@(i1, c1)) s1 a1 t1) =
+step (Config (t) s1 a1 t1) =
     map (\ti@(i, ci) -> 
         let ((ci', a2), (s2, t2)) = runState (runWriterT (evalCommand ci)) (s1, delete ti (t : t1))
         in ( Config {current = (i, ci'), cfgStore = s2, cfgOutput = a1 ++ a2, cfgThreads = t2})
@@ -205,10 +217,8 @@ wrapProgram c= Config {current = (0, c), cfgStore = Map.empty, cfgOutput = [], c
 
 -- Run a program with all possible interleavings
 run :: Command -> [Output]
-run c = toOutput $ run' [wrapProgram c]
+run c = map toOutput' $ run' [wrapProgram c]
     where 
-        toOutput :: [Config] -> [Output]
-        toOutput = map toOutput'
 
         toOutput' :: (Config) -> Output
         toOutput' (Config _ _ a _) = a
